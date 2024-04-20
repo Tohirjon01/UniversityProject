@@ -1,0 +1,20 @@
+server:
+  port: 8081
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/studentsdb
+    username: students
+    password: 1
+
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+    hibernate:
+      ddl-auto: update
+
+upload:
+  server:
+    folder: C:/Users/User/OneDrive/Documents/upload
+
