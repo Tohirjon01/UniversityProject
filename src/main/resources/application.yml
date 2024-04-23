@@ -2,8 +2,8 @@ server:
   port: 8081
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/studentsdb
-    username: students
+    url: jdbc:postgresql://localhost:5432/UniversityDB
+    username: University
     password: 1
 
   jpa:
@@ -13,8 +13,11 @@ spring:
 
     hibernate:
       ddl-auto: update
+  servlet:
+    multipart:
+      max-request-size: 100MB
+      max-file-size: 10MB
 
 upload:
   server:
     folder: C:/Users/User/OneDrive/Documents/upload
-

@@ -2,10 +2,12 @@ package uz.student.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import uz.student.dto.request.FieldRequestDTO;
 import uz.student.dto.response.FieldResponseDTO;
 import uz.student.dto.response.ResponseDTO;
 import uz.student.model.FieldOfStudy;
+import uz.student.model.FileStorage;
 import uz.student.model.University;
 import uz.student.repository.FieldOfStudyRepository;
 import uz.student.repository.UniversityRepository;
@@ -57,6 +59,11 @@ public class FieldServiceImpl implements FieldOfStudyService {
         List<FieldOfStudy> fieldOfStudiesList = fieldOfStudyRepository.findAll();
         List<FieldResponseDTO> universityResponseDTOS = toDtos(fieldOfStudiesList);
         return universityResponseDTOS;
+    }
+
+    @Override
+    public FileStorage save(MultipartFile multipartFile) {
+        return null;
     }
 
     private FieldOfStudy toEntity(FieldRequestDTO fieldRequestDTO) {

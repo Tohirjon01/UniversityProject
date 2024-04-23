@@ -25,6 +25,7 @@ public class Student implements Serializable {
     private String gender;
     private String birthDate;
     private String createdAt;
+    private String avatarUrl;
 
 
     @ManyToOne
