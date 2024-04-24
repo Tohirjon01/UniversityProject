@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 8080
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/UniversityDB
@@ -15,9 +15,11 @@ spring:
       ddl-auto: update
   servlet:
     multipart:
-      max-request-size: 100MB
-      max-file-size: 10MB
+      max-request-size: 100000MB
+      max-file-size: 100000MB
 
 upload:
   server:
-    folder: C:/Users/User/OneDrive/Documents/upload
+    folder: root/ProjectFiles
+
+

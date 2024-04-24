@@ -28,8 +28,9 @@ public class FileStorageController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity upload(@RequestParam("file") MultipartFile multipartFile) {
-        FileStorage fileStorage = fileStorageService.save(multipartFile);
+    public ResponseEntity upload(@RequestParam("studentId") Long id ,
+                                 @RequestParam("file") MultipartFile multipartFile ) {
+        FileStorage fileStorage = fileStorageService.save(id, multipartFile);
         return ResponseEntity.ok(fileStorage);
     }
 

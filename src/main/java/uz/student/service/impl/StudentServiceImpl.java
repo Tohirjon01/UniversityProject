@@ -32,7 +32,9 @@ import uz.student.service.StudentService;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -48,13 +50,25 @@ public class StudentServiceImpl implements StudentService {
 
     private final FieldOfStudyRepository fieldOfStudyRepository;
 
+    public Student createStudentInfo(Student studentModel) {
+        String pattern = "MM-dd-yyyy";
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+        String date = simpleDateFormat.format(new Date());
+        studentModel.setCreatedAt(date);
+        return studentRepository.save(studentModel);
+    }
+
     @Override
     public StudentResponseDTO createStudentInfo(StudentRequestDTO studentRequestDTO) {
         Student student = toEntity(studentRequestDTO);
         student = studentRepository.save(student);
+        if (student.getFieldOfStudy() == null){
+            throw new IllegalArgumentException("Field of study cannot be null");
+        }
         FieldOfStudy fieldOfStudy = fieldOfStudyRepository.findById(student.getFieldOfStudy().getId()).get();
         StudentResponseDTO studentResponseDTO = toDto(student);
         studentResponseDTO.setFieldName(fieldOfStudy.getName());
+        studentResponseDTO.setUniversityName(fieldOfStudy.getUniversity().getName());
 
 
         return studentResponseDTO;
@@ -76,6 +90,7 @@ public class StudentServiceImpl implements StudentService {
     public StudentResponseDTO getOneStudentById(Long id) {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found with id: " + id));
+
         return toDto(student);
     }
 
@@ -93,11 +108,6 @@ public class StudentServiceImpl implements StudentService {
         List<Student> studentList = studentRepository.findAll();
 
         return toDtos(studentList);
-    }
-
-    @Override
-    public void setStudentAvatar(Long id, MultipartFile file) {
-
     }
 
     private StudentResponseDTO toDto (Student student){

@@ -1,37 +1,49 @@
 package uz.student.service.impl;
 
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.PdfPCell;
+import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import uz.student.dto.response.StudentResponseDTO;
-import uz.student.model.FileStorage;
 import uz.student.model.Student;
 import uz.student.repository.StudentRepository;
 import uz.student.service.ExportService;
 import uz.student.service.FieldOfStudyService;
+import uz.student.service.StudentService;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 @Service
 public class ExportServiceImpl implements ExportService {
+    private static final Logger log = LoggerFactory.getLogger(ExportServiceImpl.class);
     private final StudentRepository studentRepository;
     private final FieldOfStudyService fieldOfStudyService;
+    private final FileStorageService fileStorageService;
+    private final StudentServiceImpl studentServiceImpl;
+    private final StudentService studentService;
 
-    public ExportServiceImpl(StudentRepository studentRepository, FieldOfStudyService fieldOfStudyService) {
+    public ExportServiceImpl(StudentRepository studentRepository, FieldOfStudyService fieldOfStudyService, FileStorageService fileStorageService, StudentServiceImpl studentServiceImpl, StudentService studentService) {
         this.studentRepository = studentRepository;
 
         this.fieldOfStudyService = fieldOfStudyService;
+        this.fileStorageService = fileStorageService;
+        this.studentServiceImpl = studentServiceImpl;
+        this.studentService = studentService;
     }
 
     @Override
@@ -92,26 +104,54 @@ public class ExportServiceImpl implements ExportService {
     }
 
     @Override
-    public void exportStudentToPdf(Long id, OutputStream outputStream) throws IOException {
-        StudentResponseDTO student = getOneStudentById(id);
-        try {
-            Document document = new Document();
-            PdfWriter.getInstance(document, outputStream);
+    public byte[] exportStudentToPdf(Pageable pageable) throws IOException {
 
+        try {
+
+            Document document = new Document();
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            PdfWriter.getInstance(document, bos);
             document.open();
-            document.add(new Paragraph("Student Information"));
-            document.add(new Paragraph("ID: " + student.getId()));
-            document.add(new Paragraph("First Name: " + student.getFirstName()));
-            document.add(new Paragraph("Last Name: " + student.getLastName()));
-            document.add(new Paragraph("Middle Name: " + student.getMiddleName()));
-            document.add(new Paragraph("Description: " + student.getDescription()));
-            document.add(new Paragraph("Study Start Date: " + student.getStudyStartDate()));
-            document.add(new Paragraph("Study End Date: " + student.getStudyEndDate()));
-            document.add(new Paragraph("Gender: " + student.getGender()));
-            document.add(new Paragraph("Birth Date: " + student.getBirthDate()));
-            document.add(new Paragraph("Created At: " + student.getCreatedAt()));
-            document.add(new Paragraph("Field of Study: " + student.getFieldName()));
-            document.close();
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14, BaseColor.BLACK);
+            Paragraph title = new Paragraph("Student's List", titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+            document.add(title);
+            document.add(Chunk.NEWLINE);
+            Font tableHeaderFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.BLACK);
+            Font tableBodyFont = FontFactory.getFont(FontFactory.HELVETICA, 10, BaseColor.BLACK);
+            PdfPTable table = new PdfPTable(12);
+
+
+            table.addCell(new Phrase("ID", tableHeaderFont));
+            table.addCell(new Phrase("First Name", tableHeaderFont));
+            table.addCell(new Phrase("Last Name", tableHeaderFont));
+            table.addCell(new Phrase("Middle Name", tableHeaderFont));
+            table.addCell(new Phrase("Description", tableHeaderFont));
+            table.addCell(new Phrase("Study State Date", tableHeaderFont));
+            table.addCell(new Phrase("Study End Date", tableHeaderFont));
+            table.addCell(new Phrase("Gender"));
+            table.addCell(new Phrase("BirthDate", tableHeaderFont));
+            table.addCell(new Phrase("Created At", tableHeaderFont));
+            table.addCell(new Phrase("Field of Study", tableHeaderFont));
+            table.addCell(new Phrase("University Name", tableHeaderFont));
+            studentService.getAll().forEach(studentResponseDTO -> {
+                table.addCell(new Phrase(studentResponseDTO.getId().toString(), tableHeaderFont));
+                table.addCell(new Phrase(studentResponseDTO.getFirstName(), tableHeaderFont));
+                table.addCell(new Phrase(studentResponseDTO.getLastName(), tableHeaderFont));
+                table.addCell(new Phrase(studentResponseDTO.getMiddleName(), tableHeaderFont));
+                table.addCell(new Phrase(studentResponseDTO.getDescription(), tableHeaderFont));
+                table.addCell(new Phrase(studentResponseDTO.getStudyStartDate(), tableHeaderFont));
+                table.addCell(new Phrase(studentResponseDTO.getStudyEndDate(), tableHeaderFont));
+                table.addCell(new Phrase(studentResponseDTO.getGender(), tableHeaderFont));
+                table.addCell(new Phrase(studentResponseDTO.getBirthDate(), tableHeaderFont));
+                table.addCell(new Phrase(studentResponseDTO.getCreatedAt(), tableHeaderFont));
+                table.addCell(new Phrase(studentResponseDTO.getFieldName(),tableBodyFont));
+                table.addCell(new Phrase(studentResponseDTO.getUniversityName(), tableHeaderFont));
+                    });
+            document.add(table);
+        document.close();
+        log.info("PDF created successfully" );
+        return bos.toByteArray();
 
         } catch (DocumentException e) {
             throw new IOException(e.getMessage());
@@ -129,11 +169,80 @@ public class ExportServiceImpl implements ExportService {
     public void setStudentAvatar(Long studentId, MultipartFile multipartFile) throws IOException {
         Student student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found with id: " + studentId));
-        FileStorage fileStorage = fieldOfStudyService.save(multipartFile);
-        student.setAvatarUrl(fileStorage.getUploadFolder());
+//        FileStorage fileStorage = fileStorageService.save(multipartFile);
         studentRepository.save(student);
 
     }
+
+//    @Override
+//    public byte[] createResumeToPdf(Long id) throws DocumentException {
+//
+//        try  {
+//            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+//            Document document = new Document();
+//            PdfWriter.getInstance(document, outputStream);
+//            document.open();
+//
+//            PdfPTable dataTimetable = new PdfPTable(1);
+//            PdfPCell dataTimeCell = new PdfPCell();
+//            SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//            String currentDateTime = dateTimeFormat.format(new Date());
+//            dataTimeCell.addElement(new Paragraph(currentDateTime, FontFactory.getFont(FontFactory.TIMES_ROMAN, 10, BaseColor.DARK_GRAY)));
+//            dataTimeCell.setBorder(Rectangle.NO_BORDER);
+//            dataTimetable.addCell(dataTimeCell);
+//            dataTimetable.setWidthPercentage(100);
+//            dataTimetable.setHorizontalAlignment(Element.ALIGN_LEFT);
+//            document.add(dataTimetable);
+//
+////            com.itextpdf.text.Image img = com.itextpdf.text.Image.getInstance(path);
+////            img.setAbsolutePosition(473f, 750f);
+////            img.scaleAbsolute(80f, 85);
+//            PdfPTable table = new PdfPTable(2);
+////            document.add(img);
+//            document.add(new Paragraph(" ",
+//                    FontFactory.getFont(FontFactory.TIMES_BOLD, 18, BaseColor.DARK_GRAY)));
+//            document.add(new Paragraph(" ",
+//                    FontFactory.getFont(FontFactory.TIMES_BOLD, 18, BaseColor.DARK_GRAY)));
+////            document.add(new Paragraph("Name: " + student.getFirstName() + " " +
+////                    student.getLastName() + " " + student.getMiddleName(),
+//                    FontFactory.getFont(FontFactory.TIMES_BOLD, 18, BaseColor.DARK_GRAY);
+//            document.add(new Paragraph("",
+//                    FontFactory.getFont(FontFactory.TIMES_BOLD, 18, BaseColor.DARK_GRAY)));
+//            document.add(new Paragraph("",
+//                    FontFactory.getFont(FontFactory.TIMES_BOLD, 18, BaseColor.DARK_GRAY)));
+//
+//            document.add(new Paragraph("----------------------------------------------------------------------------------------------------------------------------------"));
+//            document.add(new Paragraph("CONTACT DETAILS", FontFactory.getFont(FontFactory.TIMES_BOLD, 9, com.itextpdf.text.Font.BOLD, BaseColor.DARK_GRAY)));
+//            document.add(new Paragraph("Email: " + " " + " ", FontFactory.getFont(FontFactory.TIMES_BOLD, 7, BaseColor.DARK_GRAY)));
+//            document.add(new Paragraph("Contact", FontFactory.getFont(FontFactory.TIMES_BOLD, 7, BaseColor.DARK_GRAY)));
+//            document.add(new Paragraph("Address", FontFactory.getFont(FontFactory.TIMES_BOLD, 7, BaseColor.DARK_GRAY)));
+//            document.add(new Paragraph("----------------------------------------------------------------------------------------------------------------------------------"));
+//            document.add(new Paragraph("SKILLS", FontFactory.getFont(FontFactory.TIMES_BOLD, 9, com.itextpdf.text.Font.BOLD, BaseColor.DARK_GRAY)));
+//            //Skills
+//            document.add(new Paragraph("Skill 1", FontFactory.getFont(FontFactory.TIMES_BOLD, 7, BaseColor.DARK_GRAY)));
+//            document.add(new Paragraph("Skill 2", FontFactory.getFont(FontFactory.TIMES_BOLD, 7, BaseColor.DARK_GRAY)));
+//            document.add(new Paragraph("Skill 3", FontFactory.getFont(FontFactory.TIMES_BOLD, 7, BaseColor.DARK_GRAY)));
+//            document.add(new Paragraph("Skill 4", FontFactory.getFont(FontFactory.TIMES_BOLD, 7, BaseColor.DARK_GRAY)));
+//            document.add(table);
+//            document.add(new Paragraph("----------------------------------------------------------------------------------------------------------------------------------"));
+//            document.add(new Paragraph("QUALIFICATIONS", FontFactory.getFont(FontFactory.TIMES_BOLD, 9, com.itextpdf.text.Font.BOLD, BaseColor.DARK_GRAY)));
+//            document.add(new Paragraph("Collage: ", FontFactory.getFont(FontFactory.TIMES_BOLD, 7, BaseColor.DARK_GRAY)));
+////            document.add(new Paragraph("University: " + " " + student.getFieldOfStudy().getUniversity(), FontFactory.getFont(FontFactory.TIMES_BOLD, 7, BaseColor.DARK_GRAY)));
+//            document.add(new Paragraph("e.t.c", FontFactory.getFont(FontFactory.TIMES_BOLD, 7, BaseColor.DARK_GRAY)));
+//            document.add(new Paragraph("----------------------------------------------------------------------------------------------------------------------------------"));
+//            document.add(new Paragraph("WORK EXPERIENCE", FontFactory.getFont(FontFactory.TIMES_BOLD, 10, com.itextpdf.text.Font.BOLD, BaseColor.DARK_GRAY)));
+//            document.add(new Paragraph("DAVR BANK", FontFactory.getFont(FontFactory.TIMES_BOLD, 7, BaseColor.DARK_GRAY)));
+//            document.add(new Paragraph("----------------------------------------------------------------------------------------------------------------------------------"));
+//            document.add(new Paragraph("REFERENCES", FontFactory.getFont(FontFactory.TIMES_BOLD, 9, com.itextpdf.text.Font.BOLD, BaseColor.DARK_GRAY)));
+//            document.add(new Paragraph("Available upon request", FontFactory.getFont(FontFactory.TIMES_BOLD, 6, BaseColor.DARK_GRAY)));
+//            document.close();
+//            return outputStream.toByteArray();
+//
+//
+//        } catch (DocumentException e) {
+//            throw new RuntimeException("Error generating PDF: " + e.getMessage(), e);
+//        }
+//    }
 
     private StudentResponseDTO toDto(Student student) {
             StudentResponseDTO studentResponseDTO = new StudentResponseDTO();

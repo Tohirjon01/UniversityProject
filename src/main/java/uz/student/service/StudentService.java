@@ -25,7 +25,7 @@ public interface StudentService {
 
     List<StudentResponseDTO> getAll();
 
-    void setStudentAvatar(Long id, MultipartFile file);
+
 }
 
 

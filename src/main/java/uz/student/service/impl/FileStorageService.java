@@ -1,30 +1,38 @@
 package uz.student.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.hashids.Hashids;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import uz.student.enumeration.FileStorageStatus;
 import uz.student.model.FileStorage;
+import uz.student.model.Student;
 import uz.student.repository.FileStorageRepository;
+import uz.student.repository.StudentRepository;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 
 @Service
+
 public class FileStorageService {
     private final FileStorageRepository fileStorageRepository;
     @Value("${upload.server.folder}")
     private String serverFolderPath;
     private final Hashids hashids;
+    private final StudentRepository studentRepository;
 
-    public FileStorageService(FileStorageRepository fileStorageRepository) {
+    public FileStorageService(FileStorageRepository fileStorageRepository, StudentRepository studentRepository) {
         this.fileStorageRepository = fileStorageRepository;
+        this.studentRepository = studentRepository;
         this.hashids = new Hashids(getClass().getName(),6);
     }
 
-    public FileStorage save(MultipartFile multipartFile) {
+    public FileStorage save(Long id, MultipartFile multipartFile) {
+        Student student = studentRepository.findById(id).get();
         FileStorage fileStorage = new FileStorage();
         fileStorage.setName(multipartFile.getName());
         fileStorage.setFileSize(multipartFile.getSize());
@@ -32,11 +40,14 @@ public class FileStorageService {
         fileStorage.setExtension(getExtension(multipartFile.getOriginalFilename()));
         fileStorage.setFileStorageStatus(FileStorageStatus.DRAFT);
         fileStorage = fileStorageRepository.save(fileStorage);
+        student.setFileStorage(fileStorage);
+        studentRepository.save(student);
+
 
         //   /serverFolderPath/upload_folder/year/month/day/sdadda.pdf(.....)
 
         Date now = new Date();
-        String path = String.format("%s/upload_files/%d/%d/%d",
+        String path = String.format("%s/upload_file/%d/%d/%d",
                 this.serverFolderPath,
                 1900+now.getYear(),
                 1 + now.getMonth() ,
@@ -48,7 +59,7 @@ public class FileStorageService {
         }
 
         fileStorage.setHashId(hashids.encode(fileStorage.getId()));
-        String pathLocal = String.format("/upload_file/%d/%d/%d/%s.%s",
+        String pathLocal = String.format("upload_file/%d/%d/%d/%s.%s",
                 1900 + now.getYear(),
                 1 + now.getMonth(),
                 now.getDate(),

@@ -3,6 +3,7 @@ package uz.student.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.File;
 import java.io.Serializable;
 
 @Entity
@@ -25,10 +26,13 @@ public class Student implements Serializable {
     private String gender;
     private String birthDate;
     private String createdAt;
-    private String avatarUrl;
+
+    @ManyToOne
+    private FileStorage fileStorage;
 
 
     @ManyToOne
     private FieldOfStudy fieldOfStudy;
+
 
 }

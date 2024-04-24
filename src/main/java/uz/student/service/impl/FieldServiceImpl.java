@@ -73,8 +73,6 @@ public class FieldServiceImpl implements FieldOfStudyService {
         }
         fieldOfStudy.setName(fieldRequestDTO.getName());
 
-
-
         var universityOptional = universityRepository.findById(fieldRequestDTO.getUniversityId());
         if (universityOptional.isEmpty()){
             throw new RuntimeException("Not found University by universityId : " +  fieldOfStudy.getUniversity());
