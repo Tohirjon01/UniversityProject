@@ -26,7 +26,7 @@ public class StudentsProjectApplication {
 
 | No |                                                                             Services                                                                              | Status |
 |:--:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------:|:------:|
-| 1  |    [University Service](https://github.com/Tohirjon01/UniversityProject/blob/master/src/main/java/uz/student/service/impl/UniversityServiceImpl.java)      |   ✅    |
+| 1  |    [University Service](https://github.com/Tohirjon01/UniversityProject/blob/master/src/main/java/uz/student/controller/UniversityController.java)      |   ✅    |
 | 2  | [Field Of Study Service](https://github.com/Tohirjon01/UniversityProject/blob/master/src/main/java/uz/student/service/impl/FieldServiceImpl.java) |   ✅    |
 | 3  |   [Student Service](https://github.com/Tohirjon01/UniversityProject/blob/master/src/main/java/uz/student/service/impl/StudentServiceImpl.java)         |   ✅    |
 | 4  | [File Storage Service](https://github.com/Tohirjon01/UniversityProject/blob/master/src/main/java/uz/student/service/impl/FileStorageService.java)  |   ✅    |
