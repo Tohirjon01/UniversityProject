@@ -11,19 +11,6 @@ This system includes:
 * Get resume for each Student on .pdf file
 * Get List of All Students on .xlsx file
 
-```java
-
-@SpringBootApplication
-public class StudentsProjectApplication {
-
-    public static void main(String[] args) {
-        SpringApplication.run(StudentsProjectApplication.class, args);
-    }
-
-}
-
-```
-
 | No |                                                                             Services                                                                              | Status |
 |:--:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------:|:------:|
 | 1  |    [University Service](https://github.com/Tohirjon01/UniversityProject/blob/master/src/main/java/uz/student/controller/UniversityController.java)      |   ✅    |
